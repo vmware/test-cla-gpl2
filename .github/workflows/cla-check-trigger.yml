@@ -1,0 +1,17 @@
+# This file is auto-generated and managed by the organization's .github repository.
+# Do not modify manually. Version: 1.0.3
+name: CLA Check Trigger
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  call_cla_check:
+    uses: vmware/.github/.github/workflows/reusable-cla-check.yml@main # Pin to a specific ref
+    secrets:
+      GH_TOKEN_CLA_ASSISTANT: ${{ secrets.CLA_ASSISTANT_PAT }}
+    with:
+      cla_document_url: https://vmware.github.io/cla-docs/GenericCLA.html # Use the determined URL
+      # signature_file_path: '.github/signatures/CLA.csv' # Default in reusable
+      # signature_branch: 'main' # Default in reusable
