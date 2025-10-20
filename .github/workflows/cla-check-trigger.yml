@@ -1,10 +1,10 @@
 # Auto-managed; DO NOT EDIT MANUALLY
-# Stub Version: 7
+# Stub Version: 8
 name: CLA — Trigger Stub
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
     types: [created]
 
@@ -16,7 +16,7 @@ permissions:
   actions: read
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.event.issue.number || github.run_id }}
   cancel-in-progress: true
 
 jobs:
@@ -48,7 +48,7 @@ jobs:
 
       - name: Call reusable CLA checker
         if: ${{ steps.member.outputs.is_member != 'true' }}
-        uses: ${{ github.repository_owner }}/.github/.github/workflows/reusable-cla-check.yml@main
+        uses: vmware/.github/.github/workflows/reusable-cla-check.yml@main
         with:
           allowlist_branch: "main"
           allowlist_path: "cla/allowlist.yml"
