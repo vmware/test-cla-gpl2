@@ -1,5 +1,5 @@
 # Auto-managed; DO NOT EDIT MANUALLY
-# Stub Version: 11
+# Stub Version: 12
 name: CLA — Trigger
 
 on:
@@ -9,7 +9,12 @@ on:
     types: [created]
 
 # Keep the stub minimal; the reusable owns permissions & concurrency
-permissions: {}
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  statuses: write
+  actions: read
 
 jobs:
   cla:
