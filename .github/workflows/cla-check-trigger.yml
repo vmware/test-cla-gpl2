@@ -1,24 +1,37 @@
 # Auto-managed; DO NOT EDIT MANUALLY
-# Stub Version: 12
+# Stub Version: 13
 name: CLA — Trigger
 
 on:
   pull_request_target:
     types: [opened, synchronize, reopened, ready_for_review]
   issue_comment:
-    types: [created]
+    types: [created, edited]
 
-# Keep the stub minimal; the reusable owns permissions & concurrency
-permissions:
-  contents: read
-  pull-requests: write
-  issues: write
-  statuses: write
-  actions: read
-
+≈
 jobs:
   cla:
     name: Call reusable CLA checker
+    # run on PRs, or when a signing comment *or* recheck is posted
+    if: >
+      ${
+        github.event_name == 'pull_request_target' ||
+        (
+          github.event_name == 'issue_comment' &&
+          github.event.issue.pull_request &&
+          (
+            contains(github.event.comment.body, { sign_comment_exact | tojson }) ||
+            startsWith(github.event.comment.body, 'recheck') ||
+            startsWith(github.event.comment.body, '/recheck')
+          )
+        )
+      }
+   permissions:
+        contents: read
+        pull-requests: write
+        issues: write
+        statuses: write
+        actions: read
     uses: vmware/.github/.github/workflows/reusable-cla-check.yml@main
     with:
       allowlist_branch: "main"
