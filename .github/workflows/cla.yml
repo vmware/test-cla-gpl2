@@ -1,0 +1,72 @@
+name: "CLA Assistant"
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_target:
+    types: [opened, closed, synchronize]
+
+# Minimum required permissions
+permissions:
+  actions: write
+  contents: write
+  pull-requests: write
+  statuses: write
+
+jobs:
+  CLAAssistant:
+    runs-on: ubuntu-latest
+    steps:
+      # Step 1: Check if PR author is a member of the vmware GitHub Organization
+      - name: Check Org Membership
+        id: check-membership
+        continue-on-error: true
+        run: |
+          # Define target organization
+          TARGET_ORG="vmware"
+          
+          # Determine the user to check (PR author or comment author)
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          if [ -z "$PR_AUTHOR" ]; then
+            PR_AUTHOR="${{ github.actor }}"
+          fi
+
+          echo "=========================================="
+          echo " Target Organization : $TARGET_ORG"
+          echo " Checking User       : $PR_AUTHOR"
+          echo "=========================================="
+
+          # API call to check membership
+          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/orgs/$TARGET_ORG/members/$PR_AUTHOR")
+          
+          echo " API Response Code   : $RESPONSE"
+
+          if [ "$RESPONSE" -eq 204 ]; then
+            echo " Result             : MEMBER (Skipping CLA)"
+            echo "=========================================="
+            echo "is_member=true" >> $GITHUB_OUTPUT
+          else
+            echo " Result             : NON-MEMBER (CLA Required)"
+            echo "=========================================="
+            echo "is_member=false" >> $GITHUB_OUTPUT
+          fi
+
+      # Step 2: Run CLA Assistant for non-organization members
+      - name: "CLA Assistant"
+        if: |
+          steps.check-membership.outputs.is_member == 'false' &&
+          ((github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target')
+        
+        uses: vmware/github-action@main
+        
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        
+        with:
+          path-to-document: 'https://github.com/vmware/oss-public-policy/blob/main/Broadcom_CLA.md'
+          path-to-signatures: 'signatures/version1/cla.json'
+          branch: 'main'
+          allowlist: 'bot*, dependabot[bot]'
