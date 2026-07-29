@@ -68,5 +68,5 @@ jobs:
         with:
           path-to-document: 'https://github.com/vmware/oss-public-policy/blob/main/Broadcom_CLA.md'
           path-to-signatures: 'signatures/version1/cla.json'
-          branch: 'main'
+          branch: 'cla-signatures'
           allowlist: 'bot*, dependabot[bot]'
