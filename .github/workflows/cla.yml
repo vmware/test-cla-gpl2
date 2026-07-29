@@ -60,7 +60,7 @@ jobs:
           steps.check-membership.outputs.is_member == 'false' &&
           ((github.event.comment.body == 'recheck' || github.event.comment.body == 'I have read the CLA Document and I hereby sign the CLA') || github.event_name == 'pull_request_target')
         
-        uses: vmware/github-action@main
+        uses: contributor-assistant/github-action@v2.6.1
         
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
