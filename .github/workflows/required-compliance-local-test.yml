@@ -70,9 +70,9 @@ jobs:
       - name: Verify Compliance
         id: policy
         env:
-          APP_TOKEN: ${{ steps.app-token.outputs.token }}
-          CLA_APP_ID: ${{ secrets.CLA_APP_ID }}
-          CLA_APP_PRIVATE_KEY: ${{ secrets.CLA_APP_PRIVATE_KEY }}
+          # APP_TOKEN: ${{ steps.app-token.outputs.token }}
+          # CLA_APP_ID: ${{ secrets.CLA_APP_ID }}
+          # CLA_APP_PRIVATE_KEY: ${{ secrets.CLA_APP_PRIVATE_KEY }}
           
           # Auth & Context
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
