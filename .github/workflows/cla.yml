@@ -12,7 +12,7 @@ permissions:
   contents: write
   pull-requests: write
   statuses: write
-  org: read
+  organization: read # <-- Added org read permission
 
 jobs:
   CLAAssistant:
