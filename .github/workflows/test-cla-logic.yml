@@ -1,0 +1,77 @@
+name: Test CLA & Auth Logic
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  workflow_dispatch: # Allows manual trigger from Actions tab!
+
+jobs:
+  diagnose-auth-and-membership:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # TEST 1: Try App Token Generation
+      - name: 1. Test GitHub App Token Generation
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        continue-on-error: true # Don't block the rest of the test if this fails
+        with:
+          app-id: ${{ secrets.CLA_APP_ID }}
+          private-key: ${{ secrets.CLA_APP_PRIVATE_KEY }}
+          owner: ${{ vars.CENTRAL_ORG }}
+
+      # TEST 2: Inspect Token Availability
+      - name: 2. Diagnose Available Tokens
+        run: |
+          echo "=== TOKEN DIAGNOSTICS ==="
+          if [ -n "${{ steps.app-token.outputs.token }}" ]; then
+            echo "✅ GitHub App Token: PRESENT"
+          else
+            echo "❌ GitHub App Token: EMPTY / FAILED"
+          fi
+
+          if [ -n "${{ secrets.ORG_READ_TOKEN }}" ]; then
+            echo "✅ Service Account (ORG_READ_TOKEN): PRESENT"
+          else
+            echo "⚠️ Service Account (ORG_READ_TOKEN): MISSING (Not added to repo secrets yet)"
+          fi
+
+      # TEST 3: Test API Access against Private Org Membership
+      - name: 3. Test Private Membership API Call
+        run: |
+          # Pick the best available token: App Token > Service Account > Default GITHUB_TOKEN
+          if [ -n "${{ steps.app-token.outputs.token }}" ]; then
+            TEST_TOKEN="${{ steps.app-token.outputs.token }}"
+            TOKEN_TYPE="GitHub App Token"
+          elif [ -n "${{ secrets.ORG_READ_TOKEN }}" ]; then
+            TEST_TOKEN="${{ secrets.ORG_READ_TOKEN }}"
+            TOKEN_TYPE="Service Account PAT"
+          else
+            TEST_TOKEN="${{ secrets.GITHUB_TOKEN }}"
+            TOKEN_TYPE="Default GITHUB_TOKEN"
+          fi
+
+          echo "Testing API with: $TOKEN_TYPE"
+          
+          PR_AUTHOR="${{ github.event.pull_request.user.login }}"
+          ORG_NAME="${{ vars.CENTRAL_ORG || 'vmware' }}"
+
+          echo "Checking status for user '$PR_AUTHOR' in org '$ORG_NAME'..."
+
+          # Call GitHub Org Membership API
+          HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer $TEST_TOKEN" \
+            -H "Accept: application/vnd.github+json" \
+            "https://api.github.com/orgs/$ORG_NAME/members/$PR_AUTHOR")
+
+          echo "API Response HTTP Code: $HTTP_STATUS"
+
+          if [ "$HTTP_STATUS" -eq 204 ] || [ "$HTTP_STATUS" -eq 200 ]; then
+            echo "🎉 SUCCESS: User is verified as an Org Member!"
+          elif [ "$HTTP_STATUS" -eq 404 ]; then
+            echo "❌ FAIL (404): User NOT found (or token lacks scope to see private members)."
+          else
+            echo "⚠️ HTTP Status $HTTP_STATUS: Check token permissions."
+          fi
