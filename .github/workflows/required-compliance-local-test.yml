@@ -3,7 +3,7 @@ name: Legal Compliance Gate
 # We use 'pull_request_target' so Fork PRs can access the Secrets
 # needed to check the database in the Mothership.
 on:
-  pull_request_target:
+  pull_request:
     types: [opened, synchronize, reopened]
 
 jobs:
