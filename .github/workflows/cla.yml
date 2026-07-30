@@ -6,13 +6,12 @@ on:
   pull_request_target:
     types: [opened, closed, synchronize]
 
-# Minimum required permissions
+# Minimum required permissions for standard repository actions
 permissions:
   actions: write
   contents: write
   pull-requests: write
   statuses: write
-  organization: read # <-- Added org read permission
 
 jobs:
   CLAAssistant:
@@ -37,9 +36,15 @@ jobs:
           echo " Checking User       : $PR_AUTHOR"
           echo "=========================================="
 
-          # API call to check membership (works for both public and private members)
+          # Use Service Account Token (ORG_READ_TOKEN) if set, fallback to GITHUB_TOKEN
+          TOKEN="${{ secrets.ORG_READ_TOKEN }}"
+          if [ -z "$TOKEN" ]; then
+            TOKEN="${{ secrets.GITHUB_TOKEN }}"
+          fi
+
+          # Call memberships endpoint (returns 200 for active org members, public or private)
           RESPONSE=$(curl -sL -o /dev/null -w "%{http_code}" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            -H "Authorization: Bearer $TOKEN" \
             -H "Accept: application/vnd.github+json" \
             "https://api.github.com/orgs/$TARGET_ORG/memberships/$PR_AUTHOR")
           
