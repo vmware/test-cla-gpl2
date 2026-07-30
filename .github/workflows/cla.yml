@@ -12,6 +12,7 @@ permissions:
   contents: write
   pull-requests: write
   statuses: write
+  org: read
 
 jobs:
   CLAAssistant:
@@ -36,20 +37,20 @@ jobs:
           echo " Checking User       : $PR_AUTHOR"
           echo "=========================================="
 
-          # API call to check membership
+          # API call to check membership (works for both public and private members)
           RESPONSE=$(curl -sL -o /dev/null -w "%{http_code}" \
             -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
             -H "Accept: application/vnd.github+json" \
-            "https://api.github.com/orgs/$TARGET_ORG/members/$PR_AUTHOR")
+            "https://api.github.com/orgs/$TARGET_ORG/memberships/$PR_AUTHOR")
           
           echo " API Response Code   : $RESPONSE"
 
-          if [ "$RESPONSE" -eq 204 ]; then
-            echo " Result             : MEMBER (Skipping CLA)"
+          if [ "$RESPONSE" -eq 200 ]; then
+            echo " Result              : MEMBER (Skipping CLA)"
             echo "=========================================="
             echo "is_member=true" >> $GITHUB_OUTPUT
           else
-            echo " Result             : NON-MEMBER (CLA Required)"
+            echo " Result              : NON-MEMBER (CLA Required)"
             echo "=========================================="
             echo "is_member=false" >> $GITHUB_OUTPUT
           fi
