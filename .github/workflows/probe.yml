@@ -1,0 +1,10 @@
+name: Probe
+on:
+  pull_request:
+    branches: [probe-base]
+jobs:
+  probe:
+    name: ZZZ-Probe-Context
+    runs-on: ubuntu-latest
+    steps:
+      - run: echo "this job produces a CheckRun named ZZZ-Probe-Context and no commit status"
